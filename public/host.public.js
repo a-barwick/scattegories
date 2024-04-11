@@ -25,6 +25,35 @@ const hydrateDom = () => {
     refreshPlayerCards();
 }
 
+const attachNewRoundListener = () => {
+    const newRoundButton = document.getElementById("new-round");
+    newRoundButton.addEventListener("click", () => {
+        fetch("/host/round/" + state.sessionId, {
+            method: "POST",
+        }).then((res) => {
+            return res.json();
+        }).then((data) => {
+            state = data;
+            hydrateDom();
+            socket.emit("create round", sessionId);
+        }).catch((err) => {
+            console.error(err);
+        });
+    });
+};
+
+const attachStartRoundListener = () => {
+    const startRoundButton = document.getElementById("start-round");
+    startRoundButton.addEventListener("click", () => {
+        socket.emit("start round", sessionId);
+    });
+};
+
+const attachEventListeners = () => {
+    attachNewRoundListener();
+    attachStartRoundListener();
+};
+
 const refreshPlayerCards = () => {
     const cardsCmp = document.getElementById("cards");
     cardsCmp.innerHTML = "";
@@ -65,6 +94,7 @@ const createCard = (player) => {
 
         const answerLabel = document.createElement("label");
         answerLabel.textContent = key + ") " + value;
+        answerLabel.className = "blur-text";
 
         answerOutputDiv.appendChild(answerLabel);
         answerDiv.appendChild(answerOutputDiv);
@@ -94,6 +124,18 @@ const attachSocketListeners = () => {
         refreshPlayerCards();
     });
 
+    socket.on("time down", (time) => {
+        document.getElementById("time").innerText = time;
+    });
+
+    socket.on("round over", () => {
+        document.getElementById("time").innerText = "Time's Up!";
+        const answers = document.querySelectorAll(".blur-text");
+        answers.forEach((answer) => {
+            answer.classList.remove("blur-text");
+        });
+    });
+
     socket.on("error", (msg) => {
         document.getElementById("error").innerText = msg;
     });
@@ -106,6 +148,7 @@ addEventListener("load", (e) => {
         .then((data) => {
             state = data;
             hydrateDom();
+            attachEventListeners();
             initSocket();
             attachSocketListeners();
         });

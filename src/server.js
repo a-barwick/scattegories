@@ -8,7 +8,9 @@ import { dirname, join } from "node:path";
 import { Server } from "socket.io";
 import cors from "cors";
 import ShortUniqueId from "short-unique-id";
+
 import GameSessionManager from "./GameSessionManager.js";
+import CategoryHelper from "./CategoryHelper.js";
 
 const port = process.env.PORT || 3000;
 
@@ -21,7 +23,8 @@ const io = new Server(server, {
     }
 });
 const idGenerator = new ShortUniqueId({ length: 6 });
-const sessionManager = new GameSessionManager(idGenerator);
+const categoryHelper = new CategoryHelper();
+const sessionManager = new GameSessionManager(idGenerator, categoryHelper);
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -50,13 +53,14 @@ app.get("/game/info/:sessionId", (req, res) => {
         return;
     }
     const gameState = session.getGameState();
-    const player = session.players.find(player => player.id === playerId);
+    const player = session.gameState.players.find(player => player.id === playerId);
     res.json({
         playerId: player.id,
         username: player.username,
-        letter: gameState.letter,
         score: player.score,
-        round: gameState.round
+        letter: gameState.letter,
+        round: gameState.round,
+        categories: gameState.categories
     });
 });
 
@@ -75,6 +79,17 @@ app.post("/host", (req, res) => {
     res.redirect(url.format({
         pathname: "/host/" + session.id
     }));
+});
+
+app.post("/host/round/:sessionId", (req, res) => {
+    const { sessionId } = req.params;
+    const session = sessionManager.getSession(sessionId);
+    if (!session) {
+        console.error("Session not found during start round");
+        return;
+    }
+    session.createRound();
+    res.json(session.getGameState());
 });
 
 app.post("/join", (req, res) => {
@@ -97,17 +112,6 @@ io.on("connection", (socket) => {
     const { sessionId } = socket.handshake.query;
     socket.join(sessionId);
 
-    socket.on("player submit", (payload) => {
-        const { sessionId, username, answers } = payload;
-        const session = sessionManager.getSession(sessionId);
-        if (!session) {
-            console.error("Session not found during player submit");
-            return;
-        }
-        session.submitAnswers(username, answers);
-        io.to(sessionId).emit("player submit", session.getGameState());
-    });
-
     socket.on("join", (payload) => {
         const { sessionId, playerId } = payload;
         const session = sessionManager.getSession(sessionId);
@@ -118,6 +122,47 @@ io.on("connection", (socket) => {
         const player = session.getPlayer(playerId);
         socket.to(sessionId).emit("add player", player);
     });
+
+    socket.on("create round", (sessionId) => {
+        const session = sessionManager.getSession(sessionId);
+        if (!session) {
+            console.error("Session not found during start round");
+            return;
+        }
+        const round = session.getCurrentRound();
+        io.to(sessionId).emit("create round", round);
+    });
+
+    socket.on("start round", (sessionId) => {
+        const session = sessionManager.getSession(sessionId);
+        if (!session) {
+            console.error("Session not found during start round");
+            return;
+        }
+        io.to(sessionId).emit("start round");
+        // emit event every second to countdown
+        let timer = 10;
+        const interval = setInterval(() => {
+            io.to(sessionId).emit("time down", timer);
+            timer -= 1;
+            if (timer < 0) {
+                clearInterval(interval);
+                io.to(sessionId).emit("round over");
+            }
+        }, 1000);
+    });
+
+    socket.on("player submit", (payload) => {
+        const { sessionId, playerId, answers } = payload;
+        const session = sessionManager.getSession(sessionId);
+        if (!session) {
+            console.error("Session not found during player submit");
+            return;
+        }
+        session.submitAnswers(playerId, answers);
+        io.to(sessionId).emit("player submit", session.getGameState());
+    });
+
 });
 
 server.listen(port, "0.0.0.0", () => {

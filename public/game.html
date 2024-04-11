@@ -79,7 +79,6 @@
         .category label {
             display: block;
             margin-bottom: 5px;
-            color: #777;
         }
 
         .category input {
@@ -104,6 +103,11 @@
         #submit:hover {
             background-color: #45a049;
         }
+
+        .blur-text {
+            color: transparent;
+            text-shadow: 0 0 15px black;
+        }
     </style>
 </head>
 
@@ -116,27 +120,7 @@
             <div class="info boxed">Round: <span id="round"></span></div>
             <div class="info boxed">Time: <span id="time">60</span></div>
         </div>
-        <div class="categories">
-            <div class="category">
-                <label for="1">City</label>
-                <input type="text" id="1" name="category1" class="category-input" autocomplete="off">
-            </div>
-            <div class="category">
-                <label for="2">Movie</label>
-                <input type="text" id="2" name="category2" class="category-input" autocomplete="off">
-            </div>
-            <div class="category">
-                <label for="3">Famous Actor</label>
-                <input type="text" id="3" name="category3" class="category-input" autocomplete="off">
-            </div>
-            <div class="category">
-                <label for="4">Musical Instrument</label>
-                <input type="text" id="4" name="category4" class="category-input" autocomplete="off">
-            </div>
-            <div class="category">
-                <label for="5">Exercise</label>
-                <input type="text" id="5" name="category4" class="category-input" autocomplete="off">
-            </div>
+        <div class="categories" id="category-list">
         </div>
         <button id="submit">Submit</button>
         <h3>Session Code: <span id="sessionInfo"></span></h3>

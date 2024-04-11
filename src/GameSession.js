@@ -1,35 +1,19 @@
-/*
-
-game state:
-- sessionId
-- letter
-- round
-- categories: [category]
-- players: [playerState]
-
-player state:
-- id
-- name
-- score
-- answers: [answer]
-
-*/
-
 export default class GameSession {
     id;
     idGenerator;
+    categoryHelper;
     gameState;
     gameState = {};
-    players = [];
 
-    constructor(id, idGenerator) {
+    constructor(id, idGenerator, categoryHelper) {
         this.id = id;
         this.idGenerator = idGenerator;
+        this.categoryHelper = categoryHelper;
         this.gameState = this.initializeGameState();
     }
 
     addPlayer = (username) => {
-        let player = this.players.find(player => player.username === username);
+        let player = this.gameState.players.find(player => player.username === username);
         if (player) {
             return player;
         }
@@ -39,20 +23,20 @@ export default class GameSession {
             score: 0,
             answers: {}
         };
-        this.players.push(player);
+        this.gameState.players.push(player);
         return player;
     }
 
     getPlayer = (playerId) => {
-        return this.players.find(player => player.id === playerId);
+        return this.gameState.players.find(player => player.id === playerId);
     }
 
     removePlayer = (playerId) => {
-        this.players = this.players.filter(player => player.id !== playerId);
+        this.gameState.players = this.gameState.players.filter(player => player.id !== playerId);
     }
 
-    submitAnswers = (username, answers) => {
-        const player = this.players.find(player => player.username === username);
+    submitAnswers = (playerId, answers) => {
+        const player = this.gameState.players.find(player => player.id === playerId);
         player.answers = answers;
     }
 
@@ -63,10 +47,31 @@ export default class GameSession {
     initializeGameState = () => {
         return {
             sessionId: this.id,
-            letter: this.getRandomLetter(),
-            round: 1,
+            letter: "",
+            round: 0,
             categories: [],
-            players: this.players
+            players: []
+        };
+    }
+
+    createRound = () => {
+        this.gameState.round += 1;
+        let letter = this.getRandomLetter();
+        while (letter === this.gameState.letter) {
+            letter = this.getRandomLetter();
+        }
+        this.gameState.letter = letter;
+        this.gameState.categories = this.categoryHelper.getRandomCategories(10);
+        this.gameState.players.forEach(player => {
+            player.answers = {};
+        });
+    }
+
+    getCurrentRound = () => {
+        return {
+            round: this.gameState.round,
+            letter: this.gameState.letter,
+            categories: this.gameState.categories
         };
     }
 

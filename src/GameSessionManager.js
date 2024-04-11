@@ -2,15 +2,17 @@ import GameSession from "./GameSession.js";
 
 export default class GameSessionManager {
     idGenerator;
+    categoryHelper;
     sessions = {};
 
-    constructor(idGenerator) {
+    constructor(idGenerator, categoryHelper) {
         this.idGenerator = idGenerator;
+        this.categoryHelper = categoryHelper;
     }
 
     createSession = () => {
         const sessionId = this.idGenerator.rnd();
-        const session = new GameSession(sessionId, this.idGenerator);
+        const session = new GameSession(sessionId, this.idGenerator, this.categoryHelper);
         this.sessions[sessionId] = session;
         return session;
     }
