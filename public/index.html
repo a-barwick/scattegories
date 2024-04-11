@@ -1,0 +1,77 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Scattegories</title>
+    <style>
+        form {
+            margin: 5px;
+            margin-bottom: 10px;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 30px;
+        }
+
+        .container {
+            display: flex;
+            justify-content: space-around;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .section {
+            border: 1px solid #ccc;
+            padding: 20px;
+            width: 45%;
+        }
+
+        input[type="text"] {
+            margin-bottom: 10px;
+            padding: 5px;
+            width: 100%;
+        }
+
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Tic Tac Toe</h1>
+    <div class="container">
+        <div class="section">
+            <h2>Join a Session</h2>
+            <form id="joinForm" action="/join" method="post">
+                <input type="text" name="username" placeholder="username" required>
+                <input type="text" name="sessionId" placeholder="session code" required>
+                <button type="submit">Join</button>
+            </form>
+        </div>
+        <div class="section">
+            <h2>Host a Session</h2>
+            <form id="hostForm" action="/host" method="post">
+                <input type="text" name="username" placeholder="username" required>
+                <button type="submit">Host a Session</button>
+            </form>
+        </div>
+    </div>
+</body>
+
+</html>
