@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Scattegories</title>
+    <link rel="stylesheet" type="text/css" href="/public/player.css">
+</head>
+
+<body>
+    <div id="error"></div>
+    <div class="container">
+        <h1 id="username"></h1>
+        <div class="header">
+            <div class="info boxed">Letter: <span id="letter"></span></div>
+            <div class="info boxed">Round: <span id="round"></span></div>
+            <div class="info boxed">Score: <span id="score"></span></div>
+            <div class="info boxed">Time: <span id="time">60</span></div>
+        </div>
+        <div class="categories" id="category-list">
+        </div>
+        <h3>Session Code: <span id="sessionInfo"></span></h3>
+    </div>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script type="text/javascript" src="/player.public.js"></script>
+</body>
+
+</html>
