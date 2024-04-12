@@ -5,6 +5,7 @@ const playerId = new URLSearchParams(url.split("?")[1]).get("playerId");
 
 const state = {
     sessionId: sessionId,
+    sessionCode: "",
     playerId: playerId,
     username: "",
     letter: "",
@@ -111,32 +112,30 @@ const enableInputs = () => {
     labels.forEach((label) => {
         label.classList.remove("blur-text");
     });
+    attachInputEventListener();
 };
 
-const attachSubmitButtonListener = () => {
-    document.getElementById("submit").addEventListener("click", (e) => {
-        e.preventDefault();
-        const categoryInputs = Array.from(
-            document.querySelectorAll(".category-input")
-        );
-        const answers = {};
-        categoryInputs.forEach((input, index) => {
-            answers[input.id] = input.value;
+const attachInputEventListener = () => {
+    const categoryInputs = Array.from(
+        document.querySelectorAll(".category-input")
+    );
+    categoryInputs.forEach((input) => {
+        input.addEventListener("input", (e) => {
+            state.answers[input.id] = input.value;
+            emitSubmitEvent();
         });
-        state.answers = answers;
-        emitSubmitEvent();
     });
 };
 
 const setState = (data) => {
     state.sessionId = data.sessionId;
     state.sessionCode = data.sessionCode;
-    state.username = data.username;
-    state.letter = data.letter;
-    state.score = data.score;
-    state.round = data.round;
-    state.answers = data.answers;
-    state.categories = data.categories;
+    state.username = data.username || "";
+    state.letter = data.letter || "";
+    state.score = data.score || 0;
+    state.round = data.round || 0;
+    state.answers = data.answers || {};
+    state.categories = data.categories || [];
 };
 
 const refreshCategoryList = () => {
@@ -174,7 +173,7 @@ const hydrateDom = () => {
     setUsernameValue(state.username);
     setRoundValue(state.round);
     setLetterValue(state.letter);
-    attachSubmitButtonListener();
+    attachInputEventListener();
 };
 
 // Make initial fetch request on page load
