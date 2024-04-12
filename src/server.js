@@ -18,8 +18,8 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
+        origin: ['http://localhost:3000', 'https://www.bytethebug.com'],
+        methods: ['GET', 'POST'],
     }
 });
 const idGenerator = new ShortUniqueId({ length: 6 });
@@ -140,8 +140,7 @@ io.on("connection", (socket) => {
             return;
         }
         io.to(sessionId).emit("start round");
-        // emit event every second to countdown
-        let timer = 10;
+        let timer = 60;
         const interval = setInterval(() => {
             io.to(sessionId).emit("time down", timer);
             timer -= 1;

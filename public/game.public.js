@@ -16,7 +16,12 @@ const state = {
 let socket;
 
 const initSocket = () => {
-    socket = io("http://192.168.0.222:3000/", {
+    const protocol = window.location.protocol;
+    const hostname = window.location.hostname;
+    const port = window.location.port;
+    const socketUrl = `${protocol}//${hostname}:${port}`;
+
+    socket = io(socketUrl, {
         query: {
             sessionId: state.sessionId,
             playerId: state.playerId,
