@@ -35,7 +35,7 @@ const attachSocketListeners = (socket) => {
     });
 
     socket.on("create round", (roundInfo) => {
-        setRoundValue(roundInfo.round);
+        setRoundValue(roundInfo.number);
         setLetterValue(roundInfo.letter);
         setCategories(roundInfo.categories);
     });
@@ -168,6 +168,7 @@ const refreshCategoryList = () => {
 }
 
 const hydrateDom = () => {
+    console.log("hydrating dom", state);
     setSessionIdValue(state.sessionId);
     setUsernameValue(state.username);
     setRoundValue(state.round);
@@ -176,7 +177,7 @@ const hydrateDom = () => {
 };
 
 // Make initial fetch request on page load
-addEventListener("load", (e) => {
+addEventListener("load", () => {
     fetch("/game/info/" + state.sessionId + "?playerId=" + state.playerId)
         .then((res) => res.json())
         .then((data) => {

@@ -1,18 +1,16 @@
 import express from "express";
 import bodyParser from "body-parser";
-import path from "path";
-import url from "url";
+import path from "node:path";
+import url from "node:url";
 import { createServer } from "node:http";
 import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
+import { dirname } from "node:path";
 import { Server } from "socket.io";
 import cors from "cors";
-import ShortUniqueId from "short-unique-id";
 
-import GameSessionManager from "./GameSessionManager.js";
-import CategoryHelper from "./CategoryHelper.js";
+import SessionInstanceManager from "./SessionInstanceManager.ts";
 
-const port = process.env.PORT || 3000;
+const port = 3000;
 
 const app = express();
 const server = createServer(app);
@@ -22,9 +20,7 @@ const io = new Server(server, {
         methods: ['GET', 'POST'],
     }
 });
-const idGenerator = new ShortUniqueId({ length: 6 });
-const categoryHelper = new CategoryHelper();
-const sessionManager = new GameSessionManager(idGenerator, categoryHelper);
+const sessionManager = new SessionInstanceManager();
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -37,7 +33,7 @@ app.get("/", (req, res) => {
 });
 
 app.get("/game/:sessionId", (req, res) => {
-    res.sendFile(path.join(__dirname, "../public", "game.html"));
+    res.sendFile(path.join(__dirname, "../public", "player.html"));
 });
 
 app.get("/host/:sessionId", (req, res) => {
@@ -45,23 +41,15 @@ app.get("/host/:sessionId", (req, res) => {
 });
 
 app.get("/game/info/:sessionId", (req, res) => {
-    const { sessionId } = req.params;
-    const { playerId } = req.query;
+    const { sessionId } = req.params as { sessionId: string };
+    const { playerId } = req.query as { playerId: string };
     const session = sessionManager.getSession(sessionId);
     if (!session) {
         res.status(404).send("Session not found");
         return;
     }
-    const gameState = session.getGameState();
-    const player = session.gameState.players.find(player => player.id === playerId);
-    res.json({
-        playerId: player.id,
-        username: player.username,
-        score: player.score,
-        letter: gameState.letter,
-        round: gameState.round,
-        categories: gameState.categories
-    });
+    const playerResponse = session.getPlayer(playerId);
+    res.json(playerResponse);
 });
 
 app.get("/host/info/:sessionId", (req, res) => {
@@ -71,13 +59,13 @@ app.get("/host/info/:sessionId", (req, res) => {
         res.status(404).send("Session not found");
         return;
     }
-    res.json(session.getGameState());
+    res.json(session.gameState);
 });
 
 app.post("/host", (req, res) => {
     const session = sessionManager.createSession();
     res.redirect(url.format({
-        pathname: "/host/" + session.id
+        pathname: "/host/" + session.gameState.session.id
     }));
 });
 
@@ -89,7 +77,7 @@ app.post("/host/round/:sessionId", (req, res) => {
         return;
     }
     session.createRound();
-    res.json(session.getGameState());
+    res.json(session.gameState);
 });
 
 app.post("/join", (req, res) => {
@@ -109,8 +97,8 @@ app.post("/join", (req, res) => {
 });
 
 io.on("connection", (socket) => {
-    const { sessionId } = socket.handshake.query;
-    socket.join(sessionId);
+    const { sessionId, hostId } = socket.handshake.query;
+    socket.join(sessionId as string);
 
     socket.on("join", (payload) => {
         const { sessionId, playerId } = payload;
@@ -159,9 +147,8 @@ io.on("connection", (socket) => {
             return;
         }
         session.submitAnswers(playerId, answers);
-        io.to(sessionId).emit("player submit", session.getGameState());
+        io.to(sessionId).emit("player submit", session.gameState);
     });
-
 });
 
 server.listen(port, "0.0.0.0", () => {

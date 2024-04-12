@@ -7,15 +7,15 @@ let state = {};
 // DOM methods
 
 const setSessionInfo = () => {
-    document.getElementById("sessionInfo").innerText = state.sessionId;
+    document.getElementById("sessionInfo").innerText = state.session.id;
 };
 
 const setLetter = () => {
-    document.getElementById("letter").innerText = state.letter;
+    document.getElementById("letter").innerText = state.round.letter;
 };
 
 const setRound = () => {
-    document.getElementById("round").innerText = state.round;
+    document.getElementById("round").innerText = state.round.number;
 };
 
 const hydrateDom = () => {
@@ -28,7 +28,7 @@ const hydrateDom = () => {
 const attachNewRoundListener = () => {
     const newRoundButton = document.getElementById("new-round");
     newRoundButton.addEventListener("click", () => {
-        fetch("/host/round/" + state.sessionId, {
+        fetch("/host/round/" + state.session.id, {
             method: "POST",
         }).then((res) => {
             return res.json();
@@ -57,7 +57,7 @@ const attachEventListeners = () => {
 const refreshPlayerCards = () => {
     const cardsCmp = document.getElementById("cards");
     cardsCmp.innerHTML = "";
-    state.players.forEach((player) => {
+    state.session.players.forEach((player) => {
         cardsCmp.appendChild(createCard(player));
     });
 }
@@ -88,7 +88,8 @@ const createCard = (player) => {
     const answerDiv = document.createElement("div");
     answerDiv.className = "answer";
 
-    for (const [key, value] of Object.entries(player.answers)) {
+    const answers = state.round.playerAnswers[player.id] || {};
+    for (const [key, value] of Object.entries(answers)) {
         const answerOutputDiv = document.createElement("div");
         answerOutputDiv.className = "answer-output";
 
@@ -115,20 +116,20 @@ const initSocket = () => {
 
     socket = io(socketUrl, {
         query: {
-            sessionId: state.sessionId,
-            playerId: state.playerId,
+            sessionId: state.session.id,
+            hostId: state.session.host.id,
         },
     });
 };
 
 const attachSocketListeners = () => {
     socket.on("add player", (player) => {
-        state.players.push(player);
+        state.session.players.push(player);
         refreshPlayerCards();
     });
 
     socket.on("player submit", (gameState) => {
-        state.players = gameState.players;
+        state.round.playerAnswers = gameState.round.playerAnswers;
         refreshPlayerCards();
     });
 
@@ -154,6 +155,7 @@ addEventListener("load", (e) => {
     fetch("/host/info/" + sessionId)
         .then((res) => res.json())
         .then((data) => {
+            console.log(data);
             state = data;
             hydrateDom();
             attachEventListeners();
