@@ -54,6 +54,12 @@ const attachSocketListeners = (socket) => {
         disableInputs();
     });
 
+    socket.on("upvote", ({ playerId, score }) => {
+        if (playerId === state.playerId) {
+            state.score = score;
+            setScoreValue(score);
+        }
+    });
 };
 
 const emitJoinEvent = () => {
@@ -85,6 +91,10 @@ const setRoundValue = (round) => {
 
 const setLetterValue = (letter) => {
     document.getElementById("letter").innerText = letter;
+};
+
+const setScoreValue = (score) => {
+    document.getElementById("score").innerText = score;
 };
 
 const setCategories = (categories) => {
@@ -173,7 +183,8 @@ const hydrateDom = () => {
     setUsernameValue(state.username);
     setRoundValue(state.round);
     setLetterValue(state.letter);
-    attachInputEventListener();
+    setScoreValue(state.score);
+    setCategories(state.categories);
 };
 
 // Make initial fetch request on page load
@@ -184,6 +195,7 @@ addEventListener("load", () => {
             setState(data);
             hydrateDom();
             refreshCategoryList();
+            attachInputEventListener();
             initSocket();
             attachSocketListeners(socket);
             emitJoinEvent();
