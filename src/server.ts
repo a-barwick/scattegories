@@ -66,6 +66,10 @@ app.get("/host/info/:sessionId", (req, res) => {
 
 app.post("/host", jsonParser, (req, res) => {
     const { sessionCode } = req.body as { sessionCode: string | undefined };
+    if (sessionCode && !sessionManager.validateSessionCode(sessionCode)) {
+        res.status(400).send("Session code already exists");
+        return;
+    }
     const session = sessionManager.createSession(sessionCode);
     res.redirect(url.format({
         pathname: "/host/" + session.getId()
@@ -162,6 +166,13 @@ io.on("connection", (socket) => {
         }
         session.incrementPlayerScore(playerId);
         io.to(sessionId).emit("upvote", { playerId, score: session.getPlayer(playerId)?.score });
+    });
+
+    socket.on("disconnect", () => {
+        const isEnded = sessionManager.cleanupSession(sessionId as string);
+        if (isEnded) {
+            io.to(sessionId as string).emit("session ended");
+        }
     });
 });
 

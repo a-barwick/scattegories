@@ -30,4 +30,17 @@ export default class SessionInstanceManager {
     endSession = (sessionId: string) => {
         this._sessions.delete(sessionId);
     }
+
+    cleanupSession = (sessionId: string): Boolean => {
+        if (this.getSession(sessionId)?.gameState.session.players.length === 0) {
+            console.log("Cleaning up session", sessionId);
+            this.endSession(sessionId);
+            return true;
+        }
+        return false;
+    }
+
+    validateSessionCode = (sessionCode: string): boolean => {
+        return !this._sessionsByCode.has(sessionCode);
+    }
 }

@@ -158,6 +158,14 @@ const attachSocketListeners = () => {
         });
     });
 
+    socket.on("session ended", () => {
+        console.log("Ended session");
+        document.getElementById("title").innerText = "Session Ended!";
+        document.getElementById("time").innerText = "Session Ended!";
+        document.getElementById("start-round").disabled = true;
+        document.getElementById("new-round").disabled = true;
+    });
+
     socket.on("error", (msg) => {
         document.getElementById("error").innerText = msg;
     });
