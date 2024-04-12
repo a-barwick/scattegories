@@ -1,0 +1,55 @@
+{
+    "name": "scattegories",
+    "version": "0.0.1",
+    "description": "",
+    "main": "src/server.ts",
+    "tasks": {
+        "dev": "deno run --unstable-hmr --allow-read --allow-net --allow-env ./src/server.ts",
+        "start": "deno run --allow-net --allow-read src/server.ts",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "lint": {
+        "include": [
+            "src/"
+        ],
+        "exclude": [
+            "src/testdata/",
+            "src/fixtures/**/*.ts"
+        ],
+        "rules": {
+            "tags": [
+                "recommended"
+            ],
+            "include": [
+                "ban-untagged-todo"
+            ],
+            "exclude": [
+                "no-unused-vars"
+            ]
+        }
+    },
+    "fmt": {
+        "useTabs": true,
+        "lineWidth": 80,
+        "indentWidth": 4,
+        "semiColons": true,
+        "singleQuote": true,
+        "proseWrap": "preserve",
+        "include": [
+            "src/"
+        ],
+        "exclude": [
+            "src/testdata/",
+            "src/fixtures/**/*.ts"
+        ]
+    },
+    "dependencies": {
+        "cors": "2.8.5",
+        "express": "4.19.2",
+        "short-unique-id": "5.0.3",
+        "socket.io": "4.7.5"
+    },
+    "devDependencies": {
+        "denon": "2.4.0"
+    }
+}
