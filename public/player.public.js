@@ -5,6 +5,7 @@ const playerId = new URLSearchParams(url.split("?")[1]).get("playerId");
 
 const state = {
     sessionId: sessionId,
+    sessionCode: "",
     playerId: playerId,
     username: "",
     letter: "",
@@ -53,6 +54,12 @@ const attachSocketListeners = (socket) => {
         disableInputs();
     });
 
+    socket.on("upvote", ({ playerId, score }) => {
+        if (playerId === state.playerId) {
+            state.score = score;
+            setScoreValue(score);
+        }
+    });
 };
 
 const emitJoinEvent = () => {
@@ -70,8 +77,8 @@ const emitSubmitEvent = () => {
     });
 };
 
-const setSessionIdValue = (sessionId) => {
-    document.getElementById("sessionInfo").innerText = sessionId;
+const setSessionCodeValue = (sessionCode) => {
+    document.getElementById("sessionInfo").innerText = sessionCode;
 };
 
 const setUsernameValue = (username) => {
@@ -84,6 +91,10 @@ const setRoundValue = (round) => {
 
 const setLetterValue = (letter) => {
     document.getElementById("letter").innerText = letter;
+};
+
+const setScoreValue = (score) => {
+    document.getElementById("score").innerText = score;
 };
 
 const setCategories = (categories) => {
@@ -111,30 +122,30 @@ const enableInputs = () => {
     labels.forEach((label) => {
         label.classList.remove("blur-text");
     });
+    attachInputEventListener();
 };
 
-const attachSubmitButtonListener = () => {
-    document.getElementById("submit").addEventListener("click", (e) => {
-        e.preventDefault();
-        const categoryInputs = Array.from(
-            document.querySelectorAll(".category-input")
-        );
-        const answers = {};
-        categoryInputs.forEach((input, index) => {
-            answers[input.id] = input.value;
+const attachInputEventListener = () => {
+    const categoryInputs = Array.from(
+        document.querySelectorAll(".category-input")
+    );
+    categoryInputs.forEach((input) => {
+        input.addEventListener("input", (e) => {
+            state.answers[input.id] = input.value;
+            emitSubmitEvent();
         });
-        state.answers = answers;
-        emitSubmitEvent();
     });
 };
 
 const setState = (data) => {
-    state.username = data.username;
-    state.letter = data.letter;
-    state.score = data.score;
-    state.round = data.round;
-    state.answers = data.answers;
-    state.categories = data.categories;
+    state.sessionId = data.sessionId;
+    state.sessionCode = data.sessionCode;
+    state.username = data.username || "";
+    state.letter = data.letter || "";
+    state.score = data.score || 0;
+    state.round = data.round || 0;
+    state.answers = data.answers || {};
+    state.categories = data.categories || [];
 };
 
 const refreshCategoryList = () => {
@@ -168,12 +179,12 @@ const refreshCategoryList = () => {
 }
 
 const hydrateDom = () => {
-    console.log("hydrating dom", state);
-    setSessionIdValue(state.sessionId);
+    setSessionCodeValue(state.sessionCode || "");
     setUsernameValue(state.username);
     setRoundValue(state.round);
     setLetterValue(state.letter);
-    attachSubmitButtonListener();
+    setScoreValue(state.score);
+    setCategories(state.categories);
 };
 
 // Make initial fetch request on page load
@@ -184,6 +195,7 @@ addEventListener("load", () => {
             setState(data);
             hydrateDom();
             refreshCategoryList();
+            attachInputEventListener();
             initSocket();
             attachSocketListeners(socket);
             emitJoinEvent();

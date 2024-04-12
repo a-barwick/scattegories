@@ -5,154 +5,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Scattegories</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
-            margin: 0;
-            padding: 0;
-        }
-
-        .card {
-            background-color: #fff;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            margin: 20px;
-            padding: 10px;
-            min-width: 200px;
-        }
-
-        h1 {
-            text-align: center;
-            color: #333;
-        }
-
-        h3 {
-            color: #555;
-            text-align: right;
-            font-size: small;
-        }
-
-        .header {
-            display: flex;
-            justify-content: flex-start;
-            align-items: center;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-        }
-
-        .header-item {
-            padding: 10px;
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            margin: 10px;
-        }
-
-        .info {
-            color: #555;
-            border: solid 1px #555;
-            border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            padding: 5px 10px;
-        }
-
-        #new-round {
-            background-color: #2196F3;
-        }
-
-        #start-round {
-            background-color: #4CAF50;
-        }
-
-        #reveal {
-            background-color: #f44336;
-        }
-
-        button:hover {
-            background-image: linear-gradient(rgb(0 0 0/40%) 0 0);
-        }
-
-        .score {
-            color: #333;
-            margin-bottom: 10px;
-        }
-
-        #cards {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        .card-name {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-
-        .answer {
-            margin-bottom: 20px;
-        }
-
-        .answer h2 {
-            color: #555;
-            text-align: center;
-        }
-
-        .answer-output {
-            margin-bottom: 10px;
-        }
-
-        .answer-output label {
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        .answer-output input {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-
-        .submit-btn {
-            display: block;
-            width: 100%;
-            padding: 10px;
-            background-color: #4CAF50;
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-
-        .submit-btn:hover {
-            background-color: #45a049;
-        }
-
-        .session {
-            margin: 10px;
-        }
-
-        .blur-text {
-            color: transparent;
-            text-shadow: 0 0 15px black;
-        }
-    </style>
+    <link rel="stylesheet" type="text/css" href="/host.css">
 </head>
 
 <body>
     <div id="error"></div>
-    <h1>Host</h1>
+    <h1 id="title">Host</h1>
 
     <div class="header">
         <button class="header-item panel-btn" id="new-round">New Round</button>
         <button class="header-item panel-btn" id="start-round">Start Round</button>
-        <button class="header-item panel-btn" id="reveal">Reveal Answers</button>
         <div class="header-item info">Letter: <span id="letter"></span></div>
         <div class="header-item info">Round: <span id="round"></span></div>
         <div class="header-item info">Time: <span id="time"></span></div>

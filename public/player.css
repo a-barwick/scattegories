@@ -3,15 +3,19 @@ body {
     background-color: #f0f0f0;
     margin: 0;
     padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
 }
 
-.card {
+.container {
     background-color: #fff;
     border-radius: 10px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    margin: 20px;
-    padding: 10px;
-    min-width: 200px;
+    padding: 30px;
+    width: 80%;
+    max-width: 800px;
 }
 
 h1 {
@@ -19,96 +23,65 @@ h1 {
     color: #333;
 }
 
-h3 {
-    color: #555;
-    text-align: right;
-    font-size: small;
-}
-
 .header {
     display: flex;
-    justify-content: flex-start;
+    justify-content: space-between;
     align-items: center;
-    flex-wrap: wrap;
     margin-bottom: 20px;
 }
 
-.header-item {
-    padding: 10px;
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
-    margin: 10px;
+.info {
+    font-size: 24px;
+    color: #555;
 }
 
-.info {
-    color: #555;
+.boxed {
     border: solid 1px #555;
     border-radius: 4px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     padding: 5px 10px;
 }
 
-#new-round {
-    background-color: #2196F3;
-}
-
-#start-round {
-    background-color: #4CAF50;
-}
-
-button:hover {
-    background-image: linear-gradient(rgb(0 0 0/40%) 0 0);
-}
-
-.score {
-    display: flex;
-    justify-content: space-between;
+#time {
     color: #333;
-    margin-bottom: 10px;
 }
 
-#cards {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-wrap: wrap;
-}
-
-.card-name {
-    font-size: 24px;
-    font-weight: bold;
-    margin-bottom: 10px;
-}
-
-.answer {
+.categories {
     margin-bottom: 20px;
 }
 
-.answer h2 {
+.categories h2 {
     color: #555;
     text-align: center;
+    display: flex;
+    /* justify-content: space-between;
+    align-items: center;
+    flex-direction: column; */
 }
 
-.answer-output {
+.container h3 {
+    color: #555;
+    text-align: right;
+    font-size: small;
+}
+
+.category {
     margin-bottom: 10px;
 }
 
-.answer-output label {
+.category label {
     display: block;
     margin-bottom: 5px;
 }
 
-.answer-output input {
+.category input {
     width: 100%;
     padding: 8px;
     border: 1px solid #ccc;
     border-radius: 4px;
 }
 
-.submit-btn {
+#submit {
     display: block;
     width: 100%;
     padding: 10px;
@@ -120,12 +93,8 @@ button:hover {
     font-size: 16px;
 }
 
-.submit-btn:hover {
+#submit:hover {
     background-color: #45a049;
-}
-
-.session {
-    margin: 10px;
 }
 
 .blur-text {

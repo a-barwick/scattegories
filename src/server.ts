@@ -2,11 +2,11 @@ import express from "express";
 import bodyParser from "body-parser";
 import path from "node:path";
 import url from "node:url";
+import cors from "cors";
 import { createServer } from "node:http";
 import { fileURLToPath } from "node:url";
 import { dirname } from "node:path";
 import { Server } from "socket.io";
-import cors from "cors";
 
 import SessionInstanceManager from "./SessionInstanceManager.ts";
 
@@ -20,11 +20,13 @@ const io = new Server(server, {
         methods: ['GET', 'POST'],
     }
 });
+const jsonParser = bodyParser.json();
 const sessionManager = new SessionInstanceManager();
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 app.use(cors());
+app.use(express.static("./"));
 app.use(express.static(path.join(__dirname, "../public")));
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -48,7 +50,7 @@ app.get("/game/info/:sessionId", (req, res) => {
         res.status(404).send("Session not found");
         return;
     }
-    const playerResponse = session.getPlayer(playerId);
+    const playerResponse = session.getGameInfoByPlayerId(playerId);
     res.json(playerResponse);
 });
 
@@ -62,10 +64,15 @@ app.get("/host/info/:sessionId", (req, res) => {
     res.json(session.gameState);
 });
 
-app.post("/host", (req, res) => {
-    const session = sessionManager.createSession();
+app.post("/host", jsonParser, (req, res) => {
+    const { sessionCode } = req.body as { sessionCode: string | undefined };
+    if (sessionCode && !sessionManager.validateSessionCode(sessionCode)) {
+        res.status(400).send("Session code already exists");
+        return;
+    }
+    const session = sessionManager.createSession(sessionCode);
     res.redirect(url.format({
-        pathname: "/host/" + session.gameState.session.id
+        pathname: "/host/" + session.getId()
     }));
 });
 
@@ -81,15 +88,15 @@ app.post("/host/round/:sessionId", (req, res) => {
 });
 
 app.post("/join", (req, res) => {
-    const { sessionId, username } = req.body;
-    const session = sessionManager.getSession(sessionId);
+    const { sessionCode, username } = req.body;
+    const session = sessionManager.getSessionByCode(sessionCode);
     if (!session) {
         res.status(404).send("Session not found");
         return;
     }
     const player = session.addPlayer(username);
     res.redirect(url.format({
-        pathname: "/game/" + sessionId,
+        pathname: "/game/" + session.getId(),
         query: {
             playerId: player.id
         }
@@ -148,6 +155,24 @@ io.on("connection", (socket) => {
         }
         session.submitAnswers(playerId, answers);
         io.to(sessionId).emit("player submit", session.gameState);
+    });
+
+    socket.on("upvote", (payload) => {
+        const { sessionId, playerId } = payload as { sessionId: string, playerId: string };
+        const session = sessionManager.getSession(sessionId);
+        if (!session) {
+            console.error("Session not found during upvote");
+            return;
+        }
+        session.incrementPlayerScore(playerId);
+        io.to(sessionId).emit("upvote", { playerId, score: session.getPlayer(playerId)?.score });
+    });
+
+    socket.on("disconnect", () => {
+        const isEnded = sessionManager.cleanupSession(sessionId as string);
+        if (isEnded) {
+            io.to(sessionId as string).emit("session ended");
+        }
     });
 });
 

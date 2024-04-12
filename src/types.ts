@@ -63,7 +63,9 @@ type StateTransition = {
 
 // API Responses
 
-type PlayerInfoResponse = {
+type GameInfoResponse = {
+    sessionId: string;
+    sessionCode: string;
     playerId: string;
     username: string;
     score: number;
@@ -87,6 +89,6 @@ export {
     State,
     Action,
     StateTransition,
-    PlayerInfoResponse,
+    GameInfoResponse,
     RoundInfoResponse,
 };

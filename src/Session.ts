@@ -1,7 +1,7 @@
 import ShortUniqueId from "short-unique-id";
 
 import { StateMachine } from "./StateMachine.ts";
-import { GameState, Player, State, Action, RoundInfoResponse, PlayerInfoResponse } from "./types.ts";
+import { GameState, Player, State, Action, RoundInfoResponse, GameInfoResponse } from "./types.ts";
 import { getRandomCategories } from "./CategoryGenerator.ts";
 
 export default class Session {
@@ -17,10 +17,10 @@ export default class Session {
         this._gameState = value;
     }
 
-    constructor(id: string, stateMachine: StateMachine) {
+    constructor(code: string | undefined) {
         this._idGenerator = new ShortUniqueId({ length: 5 });
         this._stateMachine = new StateMachine();
-        this._gameState = this.initializeGameState(id);
+        this._gameState = this.initializeGameState(code);
     }
 
     performAction = (action: Action) => {
@@ -66,12 +66,22 @@ export default class Session {
         return player;
     }
 
-    getPlayer = (playerId: string): PlayerInfoResponse | null => {
+    getPlayer = (playerId: string): Player | null => {
+        const player = this._gameState.session.players.find(player => player.id === playerId) as Player || null;
+        if (!player) {
+            return null;
+        }
+        return player;
+    }
+
+    getGameInfoByPlayerId = (playerId: string): GameInfoResponse | null => {
         const player = this._gameState.session.players.find(player => player.id === playerId) as Player || null;
         if (!player) {
             return null;
         }
         return {
+            sessionId: this._gameState.session.id,
+            sessionCode: this._gameState.session.code,
             playerId: player.id,
             username: player.username,
             score: player.score,
@@ -89,16 +99,29 @@ export default class Session {
         this._gameState.round.playerAnswers[playerId] = answers as string[];
     }
 
-    /**
-     * Initializes the game state
-     * @returns GameState
-     */
-    initializeGameState = (id: string): GameState => {
+    incrementPlayerScore = (playerId: string) => {
+        const player = this._gameState.session.players.find(player => player.id === playerId) as Player;
+        if (!player) {
+            return;
+        }
+        player.score += 1;
+    }
+
+    getId = (): string => {
+        return this._gameState.session.id;
+    }
+
+    getCode = (): string => {
+        return this._gameState.session.code;
+    }
+
+    initializeGameState = (code: string | undefined): GameState => {
+        const id = this._idGenerator.rnd();
         return {
             state: State.IDLE,
             session: {
                 id: id,
-                code: "",
+                code: code || id,
                 host: {
                     id: this._idGenerator.rnd()
                 },

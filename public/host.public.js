@@ -7,7 +7,7 @@ let state = {};
 // DOM methods
 
 const setSessionInfo = () => {
-    document.getElementById("sessionInfo").innerText = state.session.id;
+    document.getElementById("sessionInfo").innerText = state.session.code;
 };
 
 const setLetter = () => {
@@ -75,13 +75,26 @@ const createCard = (player) => {
 
     const scoreDiv = document.createElement("div");
     scoreDiv.className = "score";
-    scoreDiv.textContent = "Score: ";
+
+    const scoreLabel = document.createElement("label");
+    scoreLabel.textContent = "Score: ";
+    scoreDiv.appendChild(scoreLabel);
 
     const scoreSpan = document.createElement("span");
     scoreSpan.id = "score";
     scoreSpan.textContent = player.score;
 
-    scoreDiv.appendChild(scoreSpan);
+    const upvoteButton = document.createElement("button");
+    upvoteButton.textContent = "👍";
+    upvoteButton.className = "upvote";
+    upvoteButton.addEventListener("click", () => {
+        state.session.players.find((p) => p.id === player.id).score++;
+        scoreSpan.textContent = player.score;
+        socket.emit("upvote", { sessionId: state.session.id, playerId: player.id });
+    });
+
+    scoreLabel.appendChild(scoreSpan);
+    scoreDiv.appendChild(upvoteButton);
     headerDiv.appendChild(usernameHeading);
     headerDiv.appendChild(scoreDiv);
 
@@ -143,6 +156,14 @@ const attachSocketListeners = () => {
         answers.forEach((answer) => {
             answer.classList.remove("blur-text");
         });
+    });
+
+    socket.on("session ended", () => {
+        console.log("Ended session");
+        document.getElementById("title").innerText = "Session Ended!";
+        document.getElementById("time").innerText = "Session Ended!";
+        document.getElementById("start-round").disabled = true;
+        document.getElementById("new-round").disabled = true;
     });
 
     socket.on("error", (msg) => {
