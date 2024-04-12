@@ -70,8 +70,8 @@ const emitSubmitEvent = () => {
     });
 };
 
-const setSessionIdValue = (sessionId) => {
-    document.getElementById("sessionInfo").innerText = sessionId;
+const setSessionCodeValue = (sessionCode) => {
+    document.getElementById("sessionInfo").innerText = sessionCode;
 };
 
 const setUsernameValue = (username) => {
@@ -129,6 +129,8 @@ const attachSubmitButtonListener = () => {
 };
 
 const setState = (data) => {
+    state.sessionId = data.sessionId;
+    state.sessionCode = data.sessionCode;
     state.username = data.username;
     state.letter = data.letter;
     state.score = data.score;
@@ -168,8 +170,7 @@ const refreshCategoryList = () => {
 }
 
 const hydrateDom = () => {
-    console.log("hydrating dom", state);
-    setSessionIdValue(state.sessionId);
+    setSessionCodeValue(state.sessionCode || "");
     setUsernameValue(state.username);
     setRoundValue(state.round);
     setLetterValue(state.letter);

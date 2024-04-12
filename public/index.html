@@ -19,6 +19,14 @@
             margin-bottom: 30px;
         }
 
+        .help-block {
+            display: block;
+            color: #777;
+            font-size: 12px;
+            margin-bottom: 10px;
+            text-align: left;
+        }
+
         .container {
             display: flex;
             justify-content: space-around;
@@ -59,15 +67,17 @@
         <div class="section">
             <h2>Join a Session</h2>
             <form id="joinForm" action="/join" method="post">
-                <input type="text" name="username" placeholder="username" required>
-                <input type="text" name="sessionId" placeholder="session code" required>
+                <input type="text" name="username" placeholder="Name" required>
+                <input type="text" name="sessionCode" placeholder="Session code" required>
                 <button type="submit">Join</button>
             </form>
         </div>
         <div class="section">
             <h2>Host a Session</h2>
             <form id="hostForm" action="/host" method="post">
-                <input type="text" name="username" placeholder="username" required>
+                <input type="text" id="sessionCode" name="sessionCode" placeholder="Session code">
+                <span class="help-block">(Optional) Enter a unique session code here. If left blank, a random code will
+                    be generated.</span>
                 <button type="submit">Host a Session</button>
             </form>
         </div>

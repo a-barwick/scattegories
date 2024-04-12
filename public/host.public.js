@@ -7,7 +7,7 @@ let state = {};
 // DOM methods
 
 const setSessionInfo = () => {
-    document.getElementById("sessionInfo").innerText = state.session.id;
+    document.getElementById("sessionInfo").innerText = state.session.code;
 };
 
 const setLetter = () => {

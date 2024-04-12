@@ -20,6 +20,7 @@ const io = new Server(server, {
         methods: ['GET', 'POST'],
     }
 });
+const jsonParser = bodyParser.json();
 const sessionManager = new SessionInstanceManager();
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -48,7 +49,7 @@ app.get("/game/info/:sessionId", (req, res) => {
         res.status(404).send("Session not found");
         return;
     }
-    const playerResponse = session.getPlayer(playerId);
+    const playerResponse = session.getGameInfoByPlayerId(playerId);
     res.json(playerResponse);
 });
 
@@ -62,10 +63,11 @@ app.get("/host/info/:sessionId", (req, res) => {
     res.json(session.gameState);
 });
 
-app.post("/host", (req, res) => {
-    const session = sessionManager.createSession();
+app.post("/host", jsonParser, (req, res) => {
+    const { sessionCode } = req.body as { sessionCode: string | undefined };
+    const session = sessionManager.createSession(sessionCode);
     res.redirect(url.format({
-        pathname: "/host/" + session.gameState.session.id
+        pathname: "/host/" + session.getId()
     }));
 });
 
@@ -81,15 +83,15 @@ app.post("/host/round/:sessionId", (req, res) => {
 });
 
 app.post("/join", (req, res) => {
-    const { sessionId, username } = req.body;
-    const session = sessionManager.getSession(sessionId);
+    const { sessionCode, username } = req.body;
+    const session = sessionManager.getSessionByCode(sessionCode);
     if (!session) {
         res.status(404).send("Session not found");
         return;
     }
     const player = session.addPlayer(username);
     res.redirect(url.format({
-        pathname: "/game/" + sessionId,
+        pathname: "/game/" + session.getId(),
         query: {
             playerId: player.id
         }
