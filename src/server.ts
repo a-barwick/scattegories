@@ -10,7 +10,8 @@ import { Server } from "socket.io";
 
 import SessionInstanceManager from "./SessionInstanceManager";
 
-const port = 3000;
+const port = Number(process.env.PORT) || 3000;
+const env = process.env.NODE_ENV || "development";
 
 const app = express();
 const server = createServer(app);
@@ -187,6 +188,11 @@ io.on("connection", (socket) => {
 });
 
 server.listen(port, "0.0.0.0", () => {
-    console.log(`Server is running on http://localhost:${port}`);
-    console.log(`Other devices can access it at http://192.168.0.222:${port}`);
+    if (env === "development") {
+        console.log("Server is running in development mode");
+        console.log(`Server is running on http://localhost:${port}`);
+        console.log(
+            `Other devices can access it at http://192.168.0.222:${port}`
+        );
+    }
 });
