@@ -1,56 +1,35 @@
 import ShortUniqueIdImport from "short-unique-id";
-
-import {
-    type GameState,
-    type Player,
-    type RoundInfoResponse,
-    type GameInfoResponse,
-} from "./types";
-import { getRandomCategories } from "./CategoryGenerator";
-
-enum State {
-    IDLE,
-    LOBBY,
-    ROUND_START,
-    PLAYING,
-    PAUSE,
-    ROUND_END,
-}
-
+import { getRandomCategories } from "./CategoryGenerator.js";
+var State;
+(function (State) {
+    State[State["IDLE"] = 0] = "IDLE";
+    State[State["LOBBY"] = 1] = "LOBBY";
+    State[State["ROUND_START"] = 2] = "ROUND_START";
+    State[State["PLAYING"] = 3] = "PLAYING";
+    State[State["PAUSE"] = 4] = "PAUSE";
+    State[State["ROUND_END"] = 5] = "ROUND_END";
+})(State || (State = {}));
 const ShortUniqueId =
     // deno-lint-ignore no-explicit-any
-    ShortUniqueIdImport as any as (typeof ShortUniqueIdImport)["default"];
-
+    ShortUniqueIdImport;
 export default class Session {
-    private _idGenerator;
-    private _gameState: GameState;
-
-    public get gameState(): GameState {
+    _idGenerator;
+    _gameState;
+    get gameState() {
         return this._gameState;
     }
-
-    public set gameState(value: GameState) {
+    set gameState(value) {
         this._gameState = value;
     }
-
-    constructor(code: string | undefined) {
+    constructor(code) {
         this._idGenerator = new ShortUniqueId({ length: 5 });
         this._gameState = this.initializeGameState(code);
     }
-
-    findPlayer = (playerId: string): Player => {
-        return (
-            (this._gameState.session.players.find(
-                (player) => player.id === playerId
-            ) as Player) || null
-        );
+    findPlayer = (playerId) => {
+        return (this._gameState.session.players.find((player) => player.id === playerId) || null);
     };
-
-    addPlayer = (username: string): Player => {
-        let player =
-            (this._gameState.session.players.find(
-                (player) => player.username === username
-            ) as Player) || null;
+    addPlayer = (username) => {
+        let player = this._gameState.session.players.find((player) => player.username === username) || null;
         if (player) {
             return player;
         }
@@ -62,23 +41,15 @@ export default class Session {
         this._gameState.session.players.push(player);
         return player;
     };
-
-    getPlayer = (playerId: string): Player | null => {
-        const player =
-            (this._gameState.session.players.find(
-                (player) => player.id === playerId
-            ) as Player) || null;
+    getPlayer = (playerId) => {
+        const player = this._gameState.session.players.find((player) => player.id === playerId) || null;
         if (!player) {
             return null;
         }
         return player;
     };
-
-    getGameInfoByPlayerId = (playerId: string): GameInfoResponse | null => {
-        const player =
-            (this._gameState.session.players.find(
-                (player) => player.id === playerId
-            ) as Player) || null;
+    getGameInfoByPlayerId = (playerId) => {
+        const player = this._gameState.session.players.find((player) => player.id === playerId) || null;
         if (!player) {
             return null;
         }
@@ -93,37 +64,27 @@ export default class Session {
             categories: this._gameState.round.categories,
         };
     };
-
-    removePlayer = (playerId: string) => {
+    removePlayer = (playerId) => {
         this._gameState.session.players =
-            this._gameState.session.players.filter(
-                (player) => player.id !== playerId
-            ) as Player[];
+            this._gameState.session.players.filter((player) => player.id !== playerId);
     };
-
-    submitAnswers = (playerId: string, answers: string[]) => {
-        this._gameState.round.playerAnswers[playerId] = answers as string[];
+    submitAnswers = (playerId, answers) => {
+        this._gameState.round.playerAnswers[playerId] = answers;
     };
-
-    incrementPlayerScore = (playerId: string) => {
-        const player = this._gameState.session.players.find(
-            (player) => player.id === playerId
-        ) as Player;
+    incrementPlayerScore = (playerId) => {
+        const player = this._gameState.session.players.find((player) => player.id === playerId);
         if (!player) {
             return;
         }
         player.score += 1;
     };
-
-    getId = (): string => {
+    getId = () => {
         return this._gameState.session.id;
     };
-
-    getCode = (): string => {
+    getCode = () => {
         return this._gameState.session.code;
     };
-
-    initializeGameState = (code: string | undefined): GameState => {
+    initializeGameState = (code) => {
         const id = this._idGenerator.rnd();
         return {
             state: State.IDLE,
@@ -144,7 +105,6 @@ export default class Session {
             },
         };
     };
-
     createRound = () => {
         this._gameState.round.number += 1;
         let letter = this.getRandomLetter();
@@ -156,16 +116,14 @@ export default class Session {
         this._gameState.round.timeRemaining = 60;
         this._gameState.round.playerAnswers = {};
     };
-
-    getCurrentRound = (): RoundInfoResponse => {
+    getCurrentRound = () => {
         return {
             number: this._gameState.round.number,
             letter: this._gameState.round.letter,
             categories: this._gameState.round.categories,
         };
     };
-
-    getRandomLetter = (): string => {
+    getRandomLetter = () => {
         const num = Math.floor(Math.random() * 26);
         const letter = String.fromCharCode(65 + num);
         return letter;

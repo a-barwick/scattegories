@@ -3,15 +3,12 @@ import url from "url";
 import { createServer } from "http";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
-import express, { Request, Response } from "express";
+import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
 import { Server } from "socket.io";
-
-import SessionInstanceManager from "./SessionInstanceManager";
-
+import SessionInstanceManager from "./SessionInstanceManager.js";
 const port = 3000;
-
 const app = express();
 const server = createServer(app);
 const io = new Server(server, {
@@ -22,29 +19,23 @@ const io = new Server(server, {
 });
 const jsonParser = bodyParser.json();
 const sessionManager = new SessionInstanceManager();
-
 const __dirname = dirname(fileURLToPath(import.meta.url));
-
 app.use(cors());
 app.use(express.static("./"));
 app.use(express.static(path.join(__dirname, "../public")));
 app.use(bodyParser.urlencoded({ extended: true }));
-
-app.get("/", (_req: Request, res: Response) => {
+app.get("/", (_req, res) => {
     res.sendFile(path.join(__dirname, "../public", "index.html"));
 });
-
-app.get("/game/:sessionId", (_req: Request, res: Response) => {
+app.get("/game/:sessionId", (_req, res) => {
     res.sendFile(path.join(__dirname, "../public", "player.html"));
 });
-
-app.get("/host/:sessionId", (_req: Request, res: Response) => {
+app.get("/host/:sessionId", (_req, res) => {
     res.sendFile(path.join(__dirname, "../public", "host.html"));
 });
-
-app.get("/game/info/:sessionId", (req: Request, res: Response) => {
-    const { sessionId } = req.params as { sessionId: string };
-    const { playerId } = req.query as { playerId: string };
+app.get("/game/info/:sessionId", (req, res) => {
+    const { sessionId } = req.params;
+    const { playerId } = req.query;
     const session = sessionManager.getSession(sessionId);
     if (!session) {
         res.status(404).send("Session not found");
@@ -53,8 +44,7 @@ app.get("/game/info/:sessionId", (req: Request, res: Response) => {
     const playerResponse = session.getGameInfoByPlayerId(playerId);
     res.json(playerResponse);
 });
-
-app.get("/host/info/:sessionId", (req: Request, res: Response) => {
+app.get("/host/info/:sessionId", (req, res) => {
     const { sessionId } = req.params;
     const session = sessionManager.getSession(sessionId);
     if (!session) {
@@ -63,22 +53,18 @@ app.get("/host/info/:sessionId", (req: Request, res: Response) => {
     }
     res.json(session.gameState);
 });
-
-app.post("/host", jsonParser, (req: Request, res: Response) => {
-    const { sessionCode } = req.body as { sessionCode: string | undefined };
+app.post("/host", jsonParser, (req, res) => {
+    const { sessionCode } = req.body;
     if (sessionCode && !sessionManager.validateSessionCode(sessionCode)) {
         res.status(400).send("Session code already exists");
         return;
     }
     const session = sessionManager.createSession(sessionCode);
-    res.redirect(
-        url.format({
-            pathname: "/host/" + session.getId(),
-        })
-    );
+    res.redirect(url.format({
+        pathname: "/host/" + session.getId(),
+    }));
 });
-
-app.post("/host/round/:sessionId", (req: Request, res: Response) => {
+app.post("/host/round/:sessionId", (req, res) => {
     const { sessionId } = req.params;
     const session = sessionManager.getSession(sessionId);
     if (!session) {
@@ -88,8 +74,7 @@ app.post("/host/round/:sessionId", (req: Request, res: Response) => {
     session.createRound();
     res.json(session.gameState);
 });
-
-app.post("/join", (req: Request, res: Response) => {
+app.post("/join", (req, res) => {
     const { sessionCode, username } = req.body;
     const session = sessionManager.getSessionByCode(sessionCode);
     if (!session) {
@@ -97,20 +82,16 @@ app.post("/join", (req: Request, res: Response) => {
         return;
     }
     const player = session.addPlayer(username);
-    res.redirect(
-        url.format({
-            pathname: "/game/" + session.getId(),
-            query: {
-                playerId: player.id,
-            },
-        })
-    );
+    res.redirect(url.format({
+        pathname: "/game/" + session.getId(),
+        query: {
+            playerId: player.id,
+        },
+    }));
 });
-
 io.on("connection", (socket) => {
     const { sessionId, hostId } = socket.handshake.query;
-    socket.join(sessionId as string);
-
+    socket.join(sessionId);
     socket.on("join", (payload) => {
         const { sessionId, playerId } = payload;
         const session = sessionManager.getSession(sessionId);
@@ -121,7 +102,6 @@ io.on("connection", (socket) => {
         const player = session.getPlayer(playerId);
         socket.to(sessionId).emit("add player", player);
     });
-
     socket.on("create round", (sessionId) => {
         const session = sessionManager.getSession(sessionId);
         if (!session) {
@@ -131,7 +111,6 @@ io.on("connection", (socket) => {
         const round = session.getCurrentRound();
         io.to(sessionId).emit("create round", round);
     });
-
     socket.on("start round", (sessionId) => {
         const session = sessionManager.getSession(sessionId);
         if (!session) {
@@ -149,7 +128,6 @@ io.on("connection", (socket) => {
             }
         }, 1000);
     });
-
     socket.on("player submit", (payload) => {
         const { sessionId, playerId, answers } = payload;
         const session = sessionManager.getSession(sessionId);
@@ -160,12 +138,8 @@ io.on("connection", (socket) => {
         session.submitAnswers(playerId, answers);
         io.to(sessionId).emit("player submit", session.gameState);
     });
-
     socket.on("upvote", (payload) => {
-        const { sessionId, playerId } = payload as {
-            sessionId: string;
-            playerId: string;
-        };
+        const { sessionId, playerId } = payload;
         const session = sessionManager.getSession(sessionId);
         if (!session) {
             console.error("Session not found during upvote");
@@ -177,15 +151,13 @@ io.on("connection", (socket) => {
             score: session.getPlayer(playerId)?.score,
         });
     });
-
     socket.on("disconnect", () => {
-        const isEnded = sessionManager.cleanupSession(sessionId as string);
+        const isEnded = sessionManager.cleanupSession(sessionId);
         if (isEnded) {
-            io.to(sessionId as string).emit("session ended");
+            io.to(sessionId).emit("session ended");
         }
     });
 });
-
 server.listen(port, "0.0.0.0", () => {
     console.log(`Server is running on http://localhost:${port}`);
     console.log(`Other devices can access it at http://192.168.0.222:${port}`);

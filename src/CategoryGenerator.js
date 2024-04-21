@@ -143,17 +143,12 @@ const categories = [
     "Famous Entrepreneurs",
     "Things That Are Rubbery",
 ];
-
 const categoriesLength = categories.length;
-
-const getRandomCategories = (number: number): string[] => {
-    const randomCategories = new Set<string>();
+const getRandomCategories = (number) => {
+    const randomCategories = new Set();
     while (randomCategories.size < number) {
-        randomCategories.add(
-            categories[Math.floor(Math.random() * categoriesLength)]
-        );
+        randomCategories.add(categories[Math.floor(Math.random() * categoriesLength)]);
     }
     return Array.from(randomCategories);
 };
-
 export { getRandomCategories };
