@@ -5,9 +5,11 @@
   "type": "module",
   "main": "server.ts",
   "scripts": {
-    "dev": "nodemon node src/server.ts",
-    "start": "node src/server.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "npx tsx src/server.ts",
+    "ts-build": "tsc --project tsconfig.json",
+    "prod-build": "npm install && mkdir -p dist && npm run ts-build && npx fix-esm-import-path dist/server.js",
+    "start": "node dist/server.js",
+    "clean": "rm -rf dist"
   },
   "keywords": [],
   "author": "",
@@ -17,6 +19,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "fix-esm-import-path": "^1.5.0",
     "short-unique-id": "^5.0.3",
     "socket.io": "^4.7.5"
   },
