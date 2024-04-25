@@ -12,6 +12,7 @@ import SessionInstanceManager from "./SessionInstanceManager";
 
 const port = Number(process.env.PORT) || 3000;
 const env = process.env.NODE_ENV || "development";
+const timeLimit = Number(process.env.TIME_LIMIT) || 60;
 
 const app = express();
 const server = createServer(app);
@@ -140,7 +141,7 @@ io.on("connection", (socket) => {
             return;
         }
         io.to(sessionId).emit("start round");
-        let timer = 60;
+        let timer = timeLimit;
         const interval = setInterval(() => {
             io.to(sessionId).emit("time down", timer);
             timer -= 1;
@@ -174,6 +175,23 @@ io.on("connection", (socket) => {
         }
         session.incrementPlayerScore(playerId);
         io.to(sessionId).emit("upvote", {
+            playerId,
+            score: session.getPlayer(playerId)?.score,
+        });
+    });
+
+    socket.on("downvote", (payload) => {
+        const { sessionId, playerId } = payload as {
+            sessionId: string;
+            playerId: string;
+        };
+        const session = sessionManager.getSession(sessionId);
+        if (!session) {
+            console.error("Session not found during upvote");
+            return;
+        }
+        session.decrementPlayerScore(playerId);
+        io.to(sessionId).emit("downvote", {
             playerId,
             score: session.getPlayer(playerId)?.score,
         });

@@ -115,6 +115,16 @@ export default class Session {
         player.score += 1;
     };
 
+    decrementPlayerScore = (playerId: string) => {
+        const player = this._gameState.session.players.find(
+            (player) => player.id === playerId
+        ) as Player;
+        if (!player) {
+            return;
+        }
+        player.score -= 1;
+    };
+
     getId = (): string => {
         return this._gameState.session.id;
     };

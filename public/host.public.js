@@ -35,6 +35,7 @@ const attachNewRoundListener = () => {
         }).then((data) => {
             state = data;
             hydrateDom();
+            refreshCategoryCard();
             socket.emit("create round", sessionId);
         }).catch((err) => {
             console.error(err);
@@ -45,6 +46,7 @@ const attachNewRoundListener = () => {
 const attachStartRoundListener = () => {
     const startRoundButton = document.getElementById("start-round");
     startRoundButton.addEventListener("click", () => {
+        unhideCategories();
         socket.emit("start round", sessionId);
     });
 };
@@ -93,8 +95,18 @@ const createCard = (player) => {
         socket.emit("upvote", { sessionId: state.session.id, playerId: player.id });
     });
 
+    const downvoteButton = document.createElement("button");
+    downvoteButton.textContent = "👎";
+    downvoteButton.className = "upvote";
+    downvoteButton.addEventListener("click", () => {
+        state.session.players.find((p) => p.id === player.id).score--;
+        scoreSpan.textContent = player.score;
+        socket.emit("downvote", { sessionId: state.session.id, playerId: player.id });
+    });
+
     scoreLabel.appendChild(scoreSpan);
     scoreDiv.appendChild(upvoteButton);
+    scoreDiv.appendChild(downvoteButton);
     headerDiv.appendChild(usernameHeading);
     headerDiv.appendChild(scoreDiv);
 
@@ -117,6 +129,50 @@ const createCard = (player) => {
     cardDiv.appendChild(headerDiv);
     cardDiv.appendChild(answerDiv);
     return cardDiv;
+}
+
+const refreshCategoryCard = () => {
+    const cardDiv = document.createElement("div");
+    cardDiv.className = "card";
+    cardDiv.id = "category-card";
+
+    const usernameHeading = document.createElement("h2");
+    usernameHeading.textContent = "Categories";
+    usernameHeading.className = "card-name";
+
+    const headerDiv = document.createElement("div");
+    headerDiv.className = "card-header";
+    headerDiv.appendChild(usernameHeading);
+
+    const categoryDiv = document.createElement("div");
+    categoryDiv.className = "answer";
+
+    for (let i = 0; i < state.round.categories.length; i++) {
+        console.log(i, state.round.categories[i]);
+        const categoryOutputDiv = document.createElement("div");
+        categoryOutputDiv.className = "answer-output";
+
+        const categoryLabel = document.createElement("label");
+        categoryLabel.textContent = `${i + 1}` + ") " + state.round.categories[i];
+        categoryLabel.className = "category blur-text";
+
+        categoryOutputDiv.appendChild(categoryLabel);
+        categoryDiv.appendChild(categoryOutputDiv);
+    }
+
+    cardDiv.appendChild(headerDiv);
+    cardDiv.appendChild(categoryDiv);
+
+    const categoryCmp = document.getElementById("categories");
+    categoryCmp.innerHTML = "";
+    categoryCmp.appendChild(cardDiv);
+}
+
+const unhideCategories = () => {
+    const answers = document.querySelectorAll(".category");
+    answers.forEach((answer) => {
+        answer.classList.remove("blur-text");
+    });
 }
 
 // Socket methods 

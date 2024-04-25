@@ -52,11 +52,11 @@ h3 {
 }
 
 #new-round {
-    background-color: #2196F3;
+    background-color: #2196f3;
 }
 
 #start-round {
-    background-color: #4CAF50;
+    background-color: #4caf50;
 }
 
 button:hover {
@@ -112,7 +112,7 @@ button:hover {
     display: block;
     width: 100%;
     padding: 10px;
-    background-color: #4CAF50;
+    background-color: #4caf50;
     color: #fff;
     border: none;
     border-radius: 4px;

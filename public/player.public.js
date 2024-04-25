@@ -60,6 +60,13 @@ const attachSocketListeners = (socket) => {
             setScoreValue(score);
         }
     });
+
+    socket.on("downvote", ({ playerId, score }) => {
+        if (playerId === state.playerId) {
+            state.score = score;
+            setScoreValue(score);
+        }
+    });
 };
 
 const emitJoinEvent = () => {
