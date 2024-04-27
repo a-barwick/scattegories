@@ -148,7 +148,6 @@ const refreshCategoryCard = () => {
     categoryDiv.className = "answer";
 
     for (let i = 0; i < state.round.categories.length; i++) {
-        console.log(i, state.round.categories[i]);
         const categoryOutputDiv = document.createElement("div");
         categoryOutputDiv.className = "answer-output";
 
@@ -215,7 +214,6 @@ const attachSocketListeners = () => {
     });
 
     socket.on("session ended", () => {
-        console.log("Ended session");
         document.getElementById("title").innerText = "Session Ended!";
         document.getElementById("time").innerText = "Session Ended!";
         document.getElementById("start-round").disabled = true;
@@ -232,7 +230,6 @@ addEventListener("load", (e) => {
     fetch("/host/info/" + sessionId)
         .then((res) => res.json())
         .then((data) => {
-            console.log(data);
             state = data;
             hydrateDom();
             attachEventListeners();

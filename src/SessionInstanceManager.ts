@@ -32,7 +32,6 @@ export default class SessionInstanceManager {
         if (
             this.getSession(sessionId)?.gameState.session.players.length === 0
         ) {
-            console.log("Cleaning up session", sessionId);
             this.endSession(sessionId);
             return true;
         }
