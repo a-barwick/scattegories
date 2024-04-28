@@ -110,7 +110,7 @@ app.post("/join", (req: Request, res: Response) => {
 });
 
 io.on("connection", (socket) => {
-    const { sessionId, hostId } = socket.handshake.query;
+    const { sessionId } = socket.handshake.query as { sessionId: string };
     socket.join(sessionId as string);
 
     socket.on("join", (payload) => {
@@ -197,11 +197,9 @@ io.on("connection", (socket) => {
         });
     });
 
-    socket.on("disconnect", () => {
-        const isEnded = sessionManager.cleanupSession(sessionId as string);
-        if (isEnded) {
-            io.to(sessionId as string).emit("session ended");
-        }
+    socket.on("disconnect", async () => {
+        const connectedSockets = (await io.in(sessionId).fetchSockets()).length;
+        sessionManager.cleanupSession(sessionId, connectedSockets);
     });
 });
 

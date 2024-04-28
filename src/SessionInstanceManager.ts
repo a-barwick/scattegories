@@ -24,18 +24,15 @@ export default class SessionInstanceManager {
         return this._sessionsByCode.get(sessionCode);
     };
 
-    endSession = (sessionId: string) => {
-        this._sessions.delete(sessionId);
-    };
-
-    cleanupSession = (sessionId: string): boolean => {
-        if (
-            this.getSession(sessionId)?.gameState.session.players.length === 0
-        ) {
-            this.endSession(sessionId);
-            return true;
+    cleanupSession = (sessionId: string, connectedSockets: number): void => {
+        if (connectedSockets === 0) {
+            const session = this._sessions.get(sessionId);
+            if (!session) {
+                return;
+            }
+            this._sessionsByCode.delete(session.getCode());
+            this._sessions.delete(sessionId);
         }
-        return false;
     };
 
     validateSessionCode = (sessionCode: string): boolean => {
