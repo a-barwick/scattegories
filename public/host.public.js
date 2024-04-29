@@ -228,12 +228,15 @@ const attachSocketListeners = () => {
 // Make initial fetch request on page load
 addEventListener("load", (e) => {
     fetch("/host/info/" + sessionId)
-        .then((res) => res.json())
-        .then((data) => {
+        .then((res) => {
+            return res.json();
+        }).then((data) => {
             state = data;
             hydrateDom();
             attachEventListeners();
             initSocket();
             attachSocketListeners();
+        }).catch((err) => {
+            console.error(err);
         });
 });

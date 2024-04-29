@@ -35,8 +35,6 @@ type GameState = {
     round: Round;
 };
 
-// State Machine
-
 // API Responses
 
 type GameInfoResponse = {
@@ -56,13 +54,16 @@ type RoundInfoResponse = {
     categories: string[];
 };
 
+// Redis
+type Redis = RedisClientType<any, any, any>;
+
 export type {
     Player,
     PlayerAnswer,
     Host,
     Round,
     GameState,
-    StateTransition,
     GameInfoResponse,
     RoundInfoResponse,
+    Redis,
 };

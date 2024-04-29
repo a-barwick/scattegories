@@ -25,18 +25,30 @@ export default class Session {
     private _idGenerator;
     private _gameState: GameState;
 
-    public get gameState(): GameState {
-        return this._gameState;
-    }
-
-    public set gameState(value: GameState) {
-        this._gameState = value;
-    }
-
-    constructor(code: string | undefined) {
+    constructor() {
         this._idGenerator = new ShortUniqueId({ length: 5 });
-        this._gameState = this.initializeGameState(code);
+        this._gameState = this.initializeGameState(undefined);
     }
+
+    static fromGameState = (gameState: GameState): Session => {
+        const session = new Session();
+        session._gameState = gameState;
+        return session;
+    };
+
+    static fromCode = (code: string | undefined): Session => {
+        const session = new Session();
+        session._gameState = session.initializeGameState(code);
+        return session;
+    };
+
+    getGameState = (): GameState => {
+        return this._gameState;
+    };
+
+    setGameState = (gameState: GameState) => {
+        this._gameState = gameState;
+    };
 
     findPlayer = (playerId: string): Player => {
         return (

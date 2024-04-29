@@ -6,9 +6,11 @@ import { dirname } from "path";
 import express, { Request, Response } from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
+import { createClient } from "redis";
 import { Server } from "socket.io";
 
-import SessionInstanceManager from "./SessionInstanceManager";
+import SessionManager from "./SessionManager";
+import Session from "./Session";
 
 const port = Number(process.env.PORT) || 3000;
 const env = process.env.NODE_ENV || "development";
@@ -23,7 +25,12 @@ const io = new Server(server, {
     },
 });
 const jsonParser = bodyParser.json();
-const sessionManager = new SessionInstanceManager();
+
+const redis = await createClient()
+    .on("error", (err) => console.error("Redis Client Error", err))
+    .connect();
+
+const sessionManager = new SessionManager(redis);
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -44,10 +51,10 @@ app.get("/host/:sessionId", (_req: Request, res: Response) => {
     res.sendFile(path.join(__dirname, "../public", "host.html"));
 });
 
-app.get("/game/info/:sessionId", (req: Request, res: Response) => {
+app.get("/game/info/:sessionId", async (req: Request, res: Response) => {
     const { sessionId } = req.params as { sessionId: string };
     const { playerId } = req.query as { playerId: string };
-    const session = sessionManager.getSession(sessionId);
+    const session = await sessionManager.getSession(sessionId);
     if (!session) {
         res.status(404).send("Session not found");
         return;
@@ -56,23 +63,27 @@ app.get("/game/info/:sessionId", (req: Request, res: Response) => {
     res.json(playerResponse);
 });
 
-app.get("/host/info/:sessionId", (req: Request, res: Response) => {
+app.get("/host/info/:sessionId", async (req: Request, res: Response) => {
     const { sessionId } = req.params;
-    const session = sessionManager.getSession(sessionId);
+    const session = (await sessionManager.getSession(sessionId)) as Session;
     if (!session) {
         res.status(404).send("Session not found");
         return;
     }
-    res.json(session.gameState);
+    res.json(session.getGameState());
 });
 
-app.post("/host", jsonParser, (req: Request, res: Response) => {
+app.post("/host", jsonParser, async (req: Request, res: Response) => {
     const { sessionCode } = req.body as { sessionCode: string | undefined };
-    if (sessionCode && !sessionManager.validateSessionCode(sessionCode)) {
+    if (
+        sessionCode &&
+        !(await sessionManager.validateSessionCode(sessionCode))
+    ) {
         res.status(400).send("Session code already exists");
         return;
     }
-    const session = sessionManager.createSession(sessionCode);
+    const session = await sessionManager.createSession(sessionCode);
+    await sessionManager.saveSession(session);
     res.redirect(
         url.format({
             pathname: "/host/" + session.getId(),
@@ -80,25 +91,27 @@ app.post("/host", jsonParser, (req: Request, res: Response) => {
     );
 });
 
-app.post("/host/round/:sessionId", (req: Request, res: Response) => {
+app.post("/host/round/:sessionId", async (req: Request, res: Response) => {
     const { sessionId } = req.params;
-    const session = sessionManager.getSession(sessionId);
+    const session = await sessionManager.getSession(sessionId);
     if (!session) {
         console.error("Session not found during start round");
         return;
     }
     session.createRound();
-    res.json(session.gameState);
+    await sessionManager.saveSession(session);
+    res.json(session.getGameState());
 });
 
-app.post("/join", (req: Request, res: Response) => {
+app.post("/join", async (req: Request, res: Response) => {
     const { sessionCode, username } = req.body;
-    const session = sessionManager.getSessionByCode(sessionCode);
+    const session = await sessionManager.getSessionByCode(sessionCode);
     if (!session) {
         res.status(404).send("Session not found");
         return;
     }
     const player = session.addPlayer(username);
+    await sessionManager.saveSession(session);
     res.redirect(
         url.format({
             pathname: "/game/" + session.getId(),
@@ -109,13 +122,13 @@ app.post("/join", (req: Request, res: Response) => {
     );
 });
 
-io.on("connection", (socket) => {
+io.on("connection", async (socket) => {
     const { sessionId } = socket.handshake.query as { sessionId: string };
     socket.join(sessionId as string);
 
-    socket.on("join", (payload) => {
+    socket.on("join", async (payload) => {
         const { sessionId, playerId } = payload;
-        const session = sessionManager.getSession(sessionId);
+        const session = await sessionManager.getSession(sessionId);
         if (!session) {
             console.error("Session not found during join");
             return;
@@ -124,8 +137,8 @@ io.on("connection", (socket) => {
         socket.to(sessionId).emit("add player", player);
     });
 
-    socket.on("create round", (sessionId) => {
-        const session = sessionManager.getSession(sessionId);
+    socket.on("create round", async (sessionId) => {
+        const session = await sessionManager.getSession(sessionId);
         if (!session) {
             console.error("Session not found during start round");
             return;
@@ -134,8 +147,8 @@ io.on("connection", (socket) => {
         io.to(sessionId).emit("create round", round);
     });
 
-    socket.on("start round", (sessionId) => {
-        const session = sessionManager.getSession(sessionId);
+    socket.on("start round", async (sessionId) => {
+        const session = await sessionManager.getSession(sessionId);
         if (!session) {
             console.error("Session not found during start round");
             return;
@@ -152,45 +165,48 @@ io.on("connection", (socket) => {
         }, 1000);
     });
 
-    socket.on("player submit", (payload) => {
+    socket.on("player submit", async (payload) => {
         const { sessionId, playerId, answers } = payload;
-        const session = sessionManager.getSession(sessionId);
+        const session = await sessionManager.getSession(sessionId);
         if (!session) {
             console.error("Session not found during player submit");
             return;
         }
         session.submitAnswers(playerId, answers);
-        io.to(sessionId).emit("player submit", session.gameState);
+        await sessionManager.saveSession(session);
+        io.to(sessionId).emit("player submit", session.getGameState());
     });
 
-    socket.on("upvote", (payload) => {
+    socket.on("upvote", async (payload) => {
         const { sessionId, playerId } = payload as {
             sessionId: string;
             playerId: string;
         };
-        const session = sessionManager.getSession(sessionId);
+        const session = await sessionManager.getSession(sessionId);
         if (!session) {
             console.error("Session not found during upvote");
             return;
         }
         session.incrementPlayerScore(playerId);
+        await sessionManager.saveSession(session);
         io.to(sessionId).emit("upvote", {
             playerId,
             score: session.getPlayer(playerId)?.score,
         });
     });
 
-    socket.on("downvote", (payload) => {
+    socket.on("downvote", async (payload) => {
         const { sessionId, playerId } = payload as {
             sessionId: string;
             playerId: string;
         };
-        const session = sessionManager.getSession(sessionId);
+        const session = await sessionManager.getSession(sessionId);
         if (!session) {
             console.error("Session not found during upvote");
             return;
         }
         session.decrementPlayerScore(playerId);
+        await sessionManager.saveSession(session);
         io.to(sessionId).emit("downvote", {
             playerId,
             score: session.getPlayer(playerId)?.score,
@@ -199,7 +215,7 @@ io.on("connection", (socket) => {
 
     socket.on("disconnect", async () => {
         const connectedSockets = (await io.in(sessionId).fetchSockets()).length;
-        sessionManager.cleanupSession(sessionId, connectedSockets);
+        await sessionManager.cleanupSession(sessionId, connectedSockets);
     });
 });
 

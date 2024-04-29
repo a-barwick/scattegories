@@ -146,7 +146,7 @@ const categories = [
 
 const categoriesLength = categories.length;
 
-const getRandomCategories = (number: number): string[] => {
+export function getRandomCategories(number: number): string[] {
     const randomCategories = new Set<string>();
     while (randomCategories.size < number) {
         randomCategories.add(
@@ -154,6 +154,4 @@ const getRandomCategories = (number: number): string[] => {
         );
     }
     return Array.from(randomCategories);
-};
-
-export { getRandomCategories };
+}
