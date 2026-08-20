@@ -30,8 +30,10 @@ const jsonParser = bodyParser.json();
 const client = createClient({
     password: process.env.REDIS_PASSWORD,
     socket: {
-        host: "redis-17275.c53.west-us.azure.redns.redis-cloud.com",
-        port: 17275,
+        host:
+            process.env.REDIS_HOST ||
+            "redis-17275.c53.west-us.azure.redns.redis-cloud.com",
+        port: Number(process.env.REDIS_PORT) || 17275,
     },
 });
 
