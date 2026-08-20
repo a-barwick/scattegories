@@ -1,26 +1,29 @@
 import Session from "./Session";
-import { Redis } from "./types";
+import { type SessionStore } from "./types";
+
+const sessionKey = (sessionId: string): string => `session:${sessionId}`;
+const codeKey = (sessionCode: string): string => `code:${sessionCode}`;
 
 export default class SessionManager {
-    private _redis: Redis;
+    private _store: SessionStore;
 
-    constructor(redis: Redis) {
-        this._redis = redis;
+    constructor(store: SessionStore) {
+        this._store = store;
     }
 
     createSession = async (code: string | undefined): Promise<Session> => {
         const session = Session.fromCode(code);
-        const payload = JSON.stringify(session.getGameState());
-        await this._redis.SET(session.getId(), payload);
-        await this._redis.SET(session.getCode(), payload);
+        await this.persistSession(session);
         return session;
     };
 
     getSession = async (sessionId: string): Promise<Session | undefined> => {
-        const result = await this._redis.GET(sessionId);
+        if (!sessionId) {
+            return undefined;
+        }
+        const result = await this._store.GET(sessionKey(sessionId));
         if (result) {
-            const session = Session.fromGameState(JSON.parse(result));
-            return session;
+            return Session.fromGameState(JSON.parse(result));
         }
         return undefined;
     };
@@ -28,35 +31,46 @@ export default class SessionManager {
     getSessionByCode = async (
         sessionCode: string
     ): Promise<Session | undefined> => {
-        const result = await this._redis.GET(sessionCode);
-        if (result) {
-            const session = Session.fromGameState(JSON.parse(result));
-            return session;
+        if (!sessionCode) {
+            return undefined;
         }
-        return undefined;
+        const sessionId = await this._store.GET(codeKey(sessionCode));
+        if (!sessionId) {
+            return undefined;
+        }
+        return this.getSession(sessionId);
     };
 
     saveSession = async (session: Session): Promise<void> => {
-        const payload = JSON.stringify(session.getGameState());
-        await this._redis.SET(session.getId(), payload);
+        await this.persistSession(session);
     };
 
     cleanupSession = async (
         sessionId: string,
         connectedSockets: number
     ): Promise<void> => {
-        if (connectedSockets === 0) {
-            const session = await this.getSession(sessionId);
-            if (!session) {
-                return;
-            }
-            await this._redis.DEL(session.getCode());
-            await this._redis.DEL(sessionId);
+        if (connectedSockets !== 0) {
+            return;
         }
+        const session = await this.getSession(sessionId);
+        if (!session) {
+            return;
+        }
+        await this._store.DEL(codeKey(session.getCode()));
+        await this._store.DEL(sessionKey(sessionId));
     };
 
     validateSessionCode = async (sessionCode: string): Promise<boolean> => {
-        const numSessions = await this._redis.EXISTS(sessionCode);
-        return numSessions === 0;
+        if (!sessionCode) {
+            return true;
+        }
+        const existing = await this._store.EXISTS(codeKey(sessionCode));
+        return existing === 0;
+    };
+
+    private persistSession = async (session: Session): Promise<void> => {
+        const payload = JSON.stringify(session.getGameState());
+        await this._store.SET(sessionKey(session.getId()), payload);
+        await this._store.SET(codeKey(session.getCode()), session.getId());
     };
 }

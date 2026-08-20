@@ -17,12 +17,7 @@ const state = {
 let socket;
 
 const initSocket = () => {
-    const protocol = window.location.protocol;
-    const hostname = window.location.hostname;
-    const port = window.location.port;
-    const socketUrl = `${protocol}//${hostname}:${port}`;
-
-    socket = io(socketUrl, {
+    socket = io({
         query: {
             sessionId: state.sessionId,
             playerId: state.playerId,
@@ -197,8 +192,18 @@ const hydrateDom = () => {
 // Make initial fetch request on page load
 addEventListener("load", () => {
     fetch("/game/info/" + state.sessionId + "?playerId=" + state.playerId)
-        .then((res) => res.json())
+        .then((res) => {
+            if (!res.ok) {
+                window.location.href = "/error.html";
+                throw new Error("Session not found");
+            }
+            return res.json();
+        })
         .then((data) => {
+            if (!data) {
+                window.location.href = "/error.html";
+                return;
+            }
             setState(data);
             hydrateDom();
             refreshCategoryList();
@@ -206,5 +211,8 @@ addEventListener("load", () => {
             initSocket();
             attachSocketListeners(socket);
             emitJoinEvent();
+        })
+        .catch((err) => {
+            console.error(err);
         });
 });

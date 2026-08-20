@@ -11,5 +11,7 @@
     "skipLibCheck": true,
     "moduleResolution": "Bundler",
     "outDir": "dist"
-  }
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.test.ts"]
 }

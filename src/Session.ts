@@ -1,21 +1,13 @@
 import ShortUniqueIdImport from "short-unique-id";
 
 import {
+    State,
     type GameState,
     type Player,
     type RoundInfoResponse,
     type GameInfoResponse,
 } from "./types";
 import { getRandomCategories } from "./CategoryGenerator";
-
-enum State {
-    IDLE,
-    LOBBY,
-    ROUND_START,
-    PLAYING,
-    PAUSE,
-    ROUND_END,
-}
 
 const ShortUniqueId =
     // deno-lint-ignore no-explicit-any
@@ -113,8 +105,19 @@ export default class Session {
             ) as Player[];
     };
 
-    submitAnswers = (playerId: string, answers: string[]) => {
-        this._gameState.round.playerAnswers[playerId] = answers as string[];
+    submitAnswers = (
+        playerId: string,
+        answers: Record<string, string> | string[]
+    ) => {
+        if (!playerId) {
+            return;
+        }
+        const normalized = Array.isArray(answers)
+            ? Object.fromEntries(
+                  answers.map((answer, index) => [String(index + 1), answer])
+              )
+            : answers;
+        this._gameState.round.playerAnswers[playerId] = normalized;
     };
 
     incrementPlayerScore = (playerId: string) => {
