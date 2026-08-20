@@ -1,0 +1,18 @@
+{
+    "name": "Scattegories",
+    "install": "sudo apt-get update && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y redis-server && npm install",
+    "start": "redis-cli ping >/dev/null 2>&1 || redis-server --daemonize yes --bind 127.0.0.1 --port 6379 --dir /tmp --save ''",
+    "terminals": [
+        {
+            "name": "dev-server",
+            "command": "REDIS_HOST=127.0.0.1 REDIS_PORT=6379 PORT=3000 npm run dev",
+            "description": "Scattegories Express + Socket.IO dev server (tsx watch) on http://localhost:3000, backed by the local Redis started in the start command."
+        }
+    ],
+    "ports": [
+        {
+            "name": "dev-server",
+            "port": 3000
+        }
+    ]
+}
