@@ -31,6 +31,9 @@ const attachNewRoundListener = () => {
         fetch("/host/round/" + state.session.id, {
             method: "POST",
         }).then((res) => {
+            if (!res.ok) {
+                throw new Error("Could not create a new round");
+            }
             return res.json();
         }).then((data) => {
             state = data;
@@ -39,6 +42,7 @@ const attachNewRoundListener = () => {
             socket.emit("create round", sessionId);
         }).catch((err) => {
             console.error(err);
+            document.getElementById("error").innerText = "Could not start a new round.";
         });
     });
 };
@@ -90,8 +94,12 @@ const createCard = (player) => {
     upvoteButton.textContent = "👍";
     upvoteButton.className = "upvote";
     upvoteButton.addEventListener("click", () => {
-        state.session.players.find((p) => p.id === player.id).score++;
-        scoreSpan.textContent = player.score;
+        const current = state.session.players.find((p) => p.id === player.id);
+        if (!current) {
+            return;
+        }
+        current.score++;
+        scoreSpan.textContent = current.score;
         socket.emit("upvote", { sessionId: state.session.id, playerId: player.id });
     });
 
@@ -99,8 +107,12 @@ const createCard = (player) => {
     downvoteButton.textContent = "👎";
     downvoteButton.className = "upvote";
     downvoteButton.addEventListener("click", () => {
-        state.session.players.find((p) => p.id === player.id).score--;
-        scoreSpan.textContent = player.score;
+        const current = state.session.players.find((p) => p.id === player.id);
+        if (!current) {
+            return;
+        }
+        current.score--;
+        scoreSpan.textContent = current.score;
         socket.emit("downvote", { sessionId: state.session.id, playerId: player.id });
     });
 
@@ -177,12 +189,7 @@ const unhideCategories = () => {
 // Socket methods 
 
 const initSocket = () => {
-    const protocol = window.location.protocol;
-    const hostname = window.location.hostname;
-    const port = window.location.port;
-    const socketUrl = `${protocol}//${hostname}:${port}`;
-
-    socket = io(socketUrl, {
+    socket = io({
         query: {
             sessionId: state.session.id,
             hostId: state.session.host.id,
@@ -192,6 +199,12 @@ const initSocket = () => {
 
 const attachSocketListeners = () => {
     socket.on("add player", (player) => {
+        if (!player || !player.id) {
+            return;
+        }
+        if (state.session.players.some((existing) => existing.id === player.id)) {
+            return;
+        }
         state.session.players.push(player);
         refreshPlayerCards();
     });
@@ -226,9 +239,13 @@ const attachSocketListeners = () => {
 };
 
 // Make initial fetch request on page load
-addEventListener("load", (e) => {
+addEventListener("load", () => {
     fetch("/host/info/" + sessionId)
         .then((res) => {
+            if (!res.ok) {
+                window.location.href = "/error.html";
+                throw new Error("Session not found");
+            }
             return res.json();
         }).then((data) => {
             state = data;
